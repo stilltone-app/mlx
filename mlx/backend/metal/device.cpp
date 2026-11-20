@@ -980,6 +980,16 @@ bool is_nax_available() {
   return false;
 #else
   auto _check_nax = []() {
+    // stilltone patch 2026-11-20: STILLTONE_MLX_NO_NAX=1 turns the NAX kernels off (fallback if a
+    // NAX kernel fails to JIT-compile on an M5-class GPU).
+    if (const char* e = std::getenv("STILLTONE_MLX_NO_NAX"); e && *e && *e != '0') {
+      return false;
+    }
+    // Test only: STILLTONE_MLX_FORCE_NAX=1 takes the NAX path on a pre-M5 GPU (Metal 4 compiles the tensor ops there), so
+    // every NAX kernel the pipeline uses is JIT-compiled and run on the dev Mac before an M5 sees it.
+    if (const char* f = std::getenv("STILLTONE_MLX_FORCE_NAX"); f && *f && *f != '0') {
+      return true;
+    }
     bool can_use_nax = false;
     if (__builtin_available(
             macOS 26.2, iOS 26.2, tvOS 26.2, visionOS 26.2, *)) {
